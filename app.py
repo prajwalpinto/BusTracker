@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request, render_template_string
+from flask import Flask, jsonify, request
 import requests
 from google.transit import gtfs_realtime_pb2
-import pandas as pd
-import time
+from folium.plugins import Realtime
+import folium
 import os
 import json
 
@@ -16,6 +16,26 @@ GEOJSON_FILENAME = 'bus_positions.geojson'
 # Ensure the data folder exists
 if not os.path.exists(DATA_FOLDER):
     os.makedirs(DATA_FOLDER)
+
+def get_all_route_ids():
+    """
+    Fetches the PB data and returns a sorted list of unique, active route IDs.
+    """
+    feed = gtfs_realtime_pb2.FeedMessage()
+    try:
+        response = requests.get(FEED_URL, allow_redirects=True, timeout=5)
+        response.raise_for_status()
+        feed.ParseFromString(response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data for route list: {e}")
+        return []
+
+    route_ids = set()
+    for entity in feed.entity:
+        if entity.HasField('vehicle') and entity.vehicle.HasField('trip') and entity.vehicle.trip.HasField('route_id'):
+            route_ids.add(entity.vehicle.trip.route_id)
+    
+    return sorted(list(route_ids))
 
 def fetch_and_convert_to_geojson(target_bus_id=None):
     """
@@ -87,9 +107,6 @@ def index():
     Generates the initial HTML page with the real-time map.
     Reads 'bus' parameter from the URL to determine which bus(es) to show.
     """
-    import folium
-    from folium.plugins import Realtime
-
     target_bus = request.args.get('bus', None)
 
     data_url = '/bus_data.geojson'
@@ -99,12 +116,40 @@ def index():
     else:
         map_title = "Live Tracking: All Active Buses"
 
-    m = folium.Map(location=[44.6488, -63.5752], zoom_start=12) 
+    # --- NEW: Create HTML for the dropdown filter ---
+    active_routes = get_all_route_ids()
+    
+    # Start building the HTML string for the dropdown and its container
+    dropdown_html = '''
+    <div style="position: fixed; 
+                top: 10px; left: 70px; z-index: 1000; 
+                background-color: white; padding: 10px; 
+                border: 2px solid grey; border-radius: 5px;
+                font-family: sans-serif;">
+        <b>Filter by Route:</b><br>
+        <select id="route_selector" onchange="window.location.href = this.value;">
+            <option value="/">All Buses</option>
+    '''
+
+    # Add an <option> for each active route
+    for route in active_routes:
+        # Check if this route is the one currently being filtered
+        selected_attr = 'selected' if target_bus == route else ''
+        dropdown_html += f'<option value="/?bus={route}" {selected_attr}>{route}</option>'
+
+    # Close the HTML tags
+    dropdown_html += '''
+        </select>
+    </div>
+    '''
+    # --- END NEW ---
+
+    m = folium.Map(location=[44.6488, -63.5752], zoom_start=12)
 
     Realtime(
         data_url,  # This is the required positional 'source' argument
         interval=10000,
-        point_to_layer=folium.JsCode("""
+        point_to_layer=folium.JsCode(r"""
             function (feature, latlng) {
                 return L.marker(latlng).bindPopup(
                     '<b>Bus ID:</b> ' + feature.properties.id + 
@@ -120,9 +165,13 @@ def index():
         icon=folium.Icon(color='red')
     ).add_to(m)
 
+    # Add the dropdown HTML to the map
+    m.get_root().html.add_child(folium.Element(dropdown_html))
+
     return m._repr_html_()
 
 if __name__ == '__main__':
     print(f"Starting Flask server. Go to 127.0.0.1")
     print(f"To track a specific bus, visit 127.0.0.1?bus=BUS_ID_HERE")
     app.run(debug=True, use_reloader=False)
+    # app.run(debug=True, use_reloader=False, host='0.0.0.0')

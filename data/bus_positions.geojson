@@ -1,0 +1,69 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "3313",
+                "route_id": "165",
+                "bearing": 270.0,
+                "timestamp": 1787172874
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.57855987548828,
+                    44.651248931884766
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "4040",
+                "route_id": "165",
+                "bearing": 96.0,
+                "timestamp": 1787172874
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.53089141845703,
+                    44.67079162597656
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "4025",
+                "route_id": "165",
+                "bearing": 252.0,
+                "timestamp": 1787172874
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.52885055541992,
+                    44.671051025390625
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "3320",
+                "route_id": "165",
+                "bearing": 88.0,
+                "timestamp": 1787172874
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.511741638183594,
+                    44.67018127441406
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,48 @@
+import folium
+from folium.plugins import Realtime
+import time
+
+# Public API providing live position in GeoJSON format
+ISS_API_URL = "api.wheretheiss.at"
+# The API requires a list of timestamps, but the Realtime plugin handles polling a standard GeoJSON URL
+# For simple real-time updates, we need a single endpoint that always returns current GeoJSON.
+
+# A more suitable generic GeoJSON endpoint for real-time tracking (e.g., this is for the ISS)
+GENERIC_ISS_GEOJSON_URL = "api.wheretheiss.at" 
+
+# Create a map object
+m = folium.Map(location=[0, 0], zoom_start=2)
+
+# Use the Realtime plugin
+# The plugin's Javascript will make an AJAX call to the source URL every 10,000ms (10 seconds)
+# and update the markers dynamically.
+rt = Realtime(
+    data_url=GENERIC_ISS_GEOJSON_URL,
+    # The interval is in milliseconds
+    interval=10000, 
+    # Optional: Customize the icon (e.g., using Font Awesome)
+    # get_feature_id=JsCode("(f) => { return f.properties.id; }"), # Use if features have an ID
+    point_to_layer=folium.JsCode("""
+        function (feature, latlng) {
+            return L.circleMarker(latlng, {
+                radius: 8,
+                color: 'blue',
+                fillColor: '#30f',
+                fillOpacity: 0.9
+            });
+        }
+    """),
+    tooltip="ISS Location"
+)
+
+# Add the real-time plugin to the map
+rt.add_to(m)
+
+# Add layer control
+folium.LayerControl().add_to(m)
+
+# Save the map to an HTML file
+map_filename = 'live_bus_map.html'
+m.save(map_filename)
+print(f"Live updating map saved to {map_filename}. Open this file in your browser.")
+print("The map will update automatically every 10 seconds.")
