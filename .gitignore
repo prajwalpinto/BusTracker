@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 .DS_Store
+.penv/
+.venv/
+data/bus_positions.geojson
 
 # C extensions
 *.so
