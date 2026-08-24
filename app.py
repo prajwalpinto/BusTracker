@@ -133,7 +133,7 @@ def route_selector_html(active_routes, target):
     return (
         '<div style="position:fixed;top:10px;left:70px;z-index:1000;'
         'background:#fff;padding:10px;border:2px solid grey;border-radius:5px;'
-        'font-family:sans-serif">'
+        'font-family:sans-serif;font-size:30px">'
         '<b>Filter by Route:</b><br>'
         '<select id="route_selector" onchange="window.location.href=this.value">'
         + "".join(options)
@@ -156,7 +156,7 @@ def index():
         app.logger.error("Error fetching route list: %s", error)
         active_routes = []
 
-    bus_map = folium.Map(location=MAP_CENTER, zoom_start=12)
+    bus_map = folium.Map(location=MAP_CENTER, zoom_start=14)
     Realtime(
         data_url,
         interval=10000,
