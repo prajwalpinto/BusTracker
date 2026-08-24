@@ -2,6 +2,7 @@ import unittest
 
 from google.transit import gtfs_realtime_pb2
 
+import app
 from transit import route_ids, trip_route, vehicles_to_geojson
 
 
@@ -22,6 +23,13 @@ def make_feed():
 
 
 class TransitTests(unittest.TestCase):
+    def test_map_requests_location_with_center_fallback(self):
+        page = app.app.test_client().get("/").get_data(as_text=True)
+
+        self.assertIn("navigator.geolocation.getCurrentPosition", page)
+        self.assertIn("enableHighAccuracy: false", page)
+        self.assertIn("map.setView", page)
+
     def test_route_ids_are_sorted_and_unique(self):
         feed = make_feed()
         second = feed.entity.add(id="entity-2")

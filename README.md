@@ -13,6 +13,10 @@ python3 app.py
 
 Open `http://127.0.0.1:5000`. Add `?bus=ROUTE_OR_BUS_ID` to filter the map.
 
+The map asks the browser for location permission and centers on the device when
+permission is granted. Otherwise it stays centered on Halifax. Location access
+requires HTTPS when deployed; `localhost` works during local development.
+
 ## Deploy on Render
 
 Create a Web Service with:

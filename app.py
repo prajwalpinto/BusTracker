@@ -82,6 +82,31 @@ window.showBusRoute = function (map, tripId, routeId, directionId) {
 """
 
 
+def location_script(map_name):
+    """Return a client-side location helper for the rendered map."""
+    return f"""
+    <script>
+    window.addEventListener('load', function () {{
+        const map = {map_name};
+        if (!navigator.geolocation) return;
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {{
+                map.setView([
+                    position.coords.latitude,
+                    position.coords.longitude
+                ], map.getZoom());
+            }},
+            function () {{
+                // Permission denied or unavailable: keep the Halifax map center.
+            }},
+            {{ enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }}
+        );
+    }}, {{ once: true }});
+    </script>
+    """
+
+
 def current_geojson(target=None):
     """Fetch the current feed and convert it to GeoJSON."""
     try:
@@ -217,6 +242,9 @@ def index():
     ).add_to(bus_map)
     bus_map.get_root().header.add_child(folium.Element(BUS_MARKER_CSS))
     bus_map.get_root().html.add_child(folium.Element(ROUTE_SCRIPT))
+    bus_map.get_root().html.add_child(
+        folium.Element(location_script(bus_map.get_name()))
+    )
     bus_map.get_root().html.add_child(
         folium.Element(route_selector_html(active_routes, target))
     )
