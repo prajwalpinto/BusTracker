@@ -50,11 +50,14 @@ BUS_MARKER_CSS = """
 ROUTE_SCRIPT = """
 <script>
 window.selectedBusRoute = null;
-window.showBusRoute = function (map, tripId) {
+window.showBusRoute = function (map, tripId, routeId, directionId) {
     if (!tripId) return;
     if (window.selectedBusRoute) map.removeLayer(window.selectedBusRoute);
 
-    fetch('/trip_route?trip_id=' + encodeURIComponent(tripId))
+    const query = '?trip_id=' + encodeURIComponent(tripId) +
+        '&route_id=' + encodeURIComponent(routeId || '') +
+        '&direction_id=' + encodeURIComponent(directionId ?? '');
+    fetch('/trip_route' + query)
         .then((response) => response.ok ? response.json() : Promise.reject(response))
         .then((route) => {
             const routeLayer = L.layerGroup();
@@ -101,12 +104,14 @@ def health():
 @app.route("/trip_route")
 def get_trip_route():
     trip_id = request.args.get("trip_id", "")
+    route_id = request.args.get("route_id") or None
+    direction_id = request.args.get("direction_id") or None
     if not trip_id:
         return jsonify({"error": "trip_id is required"}), 400
     if not TRIP_ID_PATTERN.fullmatch(trip_id):
         return jsonify({"error": "invalid trip_id"}), 400
     try:
-        return jsonify(trip_route(trip_id))
+        return jsonify(trip_route(trip_id, route_id, direction_id))
     except KeyError:
         return jsonify({"error": "trip not found"}), 404
     except OSError as error:
@@ -161,6 +166,7 @@ def index():
                 const busId = String(properties.id || 'Unknown');
                 const routeId = String(properties.route_id || 'N/A');
                 const tripId = String(properties.trip_id || '');
+                const directionId = properties.direction_id;
                 const bearing = Number(properties.bearing) || 0;
                 const escapeHtml = (value) => value.replace(/[&<>'\"]/g, (char) => ({
                     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -187,7 +193,7 @@ def index():
                     '<br><b>Route:</b> ' + escapeHtml(routeId)
                 );
                 marker.on('click', function () {
-                    window.showBusRoute(this._map, tripId);
+                    window.showBusRoute(this._map, tripId, routeId, directionId);
                 });
                 return marker;
             }"""
@@ -203,7 +209,11 @@ def index():
     bus_map.get_root().html.add_child(
         folium.Element(route_selector_html(active_routes, target))
     )
-    return bus_map._repr_html_()
+    map_html = bus_map._repr_html_()
+    return map_html.replace(
+        "height:0;padding-bottom:60%;",
+        "height:100vh;height:100dvh;padding-bottom:0;",
+    )
 
 
 if __name__ == "__main__":

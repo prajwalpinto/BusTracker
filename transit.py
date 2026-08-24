@@ -69,6 +69,12 @@ def vehicles_to_geojson(feed, target=None):
                         if vehicle.HasField("trip") and vehicle.trip.HasField("trip_id")
                         else ""
                     ),
+                    "direction_id": (
+                        vehicle.trip.direction_id
+                        if vehicle.HasField("trip")
+                        and vehicle.trip.HasField("direction_id")
+                        else None
+                    ),
                     "stop_id": vehicle.stop_id if vehicle.HasField("stop_id") else "",
                     "stop_sequence": (
                         vehicle.current_stop_sequence
@@ -94,7 +100,11 @@ def static_gtfs():
     trips = {}
     with (GTFS_PATH / "trips.txt").open(newline="", encoding="utf-8") as file:
         for row in csv.DictReader(file):
-            trips[row["trip_id"]] = (row["route_id"], row["shape_id"])
+            trips[row["trip_id"]] = (
+                row["route_id"],
+                row["shape_id"],
+                row["direction_id"],
+            )
 
     trip_stops = {}
     with (GTFS_PATH / "stop_times.txt").open(newline="", encoding="utf-8") as file:
@@ -128,10 +138,15 @@ def static_gtfs():
     return trips, trip_stops, stop_locations, shapes
 
 
-def trip_route(trip_id):
+def trip_route(trip_id, route_id=None, direction_id=None):
     """Return a trip's route shape and ordered stop features."""
     trips, trip_stops, stop_locations, shapes = static_gtfs()
-    route_id, shape_id = trips[trip_id]
+    trip = trips.get(trip_id)
+    if trip is None and route_id is not None:
+        trip_id, trip = _fallback_trip(trips, route_id, direction_id)
+    if trip is None:
+        raise KeyError(trip_id)
+    route_id, shape_id, _ = trip
     stops = []
     for sequence, stop_id in trip_stops.get(trip_id, []):
         stop = stop_locations.get(stop_id)
@@ -162,6 +177,16 @@ def trip_route(trip_id):
         },
         "stops": {"type": "FeatureCollection", "features": stops},
     }
+
+
+def _fallback_trip(trips, route_id, direction_id):
+    """Find a current snapshot trip when realtime IDs are from another feed version."""
+    for trip_id, trip in trips.items():
+        if trip[0] == route_id and (
+            direction_id is None or trip[2] == str(direction_id)
+        ):
+            return trip_id, trip
+    return None, None
 
 
 def _vehicles(feed) -> Iterable:

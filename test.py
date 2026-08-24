@@ -39,7 +39,7 @@ class TransitTests(unittest.TestCase):
         self.assertAlmostEqual(coordinates[1], 44.65, places=5)
 
     def test_static_trip_route_contains_shape_and_ordered_stops(self):
-        route = trip_route("4446348")
+        route = trip_route("missing-trip", route_id="1")
 
         self.assertEqual(route["route_id"], "1")
         self.assertEqual(route["shape"]["geometry"]["type"], "LineString")
