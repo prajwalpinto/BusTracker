@@ -81,6 +81,19 @@ def vehicles_to_geojson(feed, target=None):
                         if vehicle.HasField("current_stop_sequence")
                         else 0
                     ),
+                    "occupancy_percentage": (
+                        vehicle.occupancy_percentage
+                        if vehicle.HasField("occupancy_percentage")
+                        else None
+                    ),
+                    "odometer": (
+                        position.odometer
+                        if position.HasField("odometer")
+                        else None
+                    ),
+                    "speed": (
+                        position.speed if position.HasField("speed") else None
+                    ),
                     "bearing": position.bearing,
                     "timestamp": feed.header.timestamp,
                 },

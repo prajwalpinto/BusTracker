@@ -19,6 +19,7 @@ BUS_MARKER_CSS = """
 .bus-marker-wrapper {
     background: transparent !important;
     border: 0 !important;
+    font-size:25px;
 }
 .bus-marker {
     width: 80px;
@@ -168,6 +169,12 @@ def index():
                 const tripId = String(properties.trip_id || '');
                 const directionId = properties.direction_id;
                 const bearing = Number(properties.bearing) || 0;
+                const occupancy = properties.occupancy_percentage == null
+                    ? 'Unavailable' : properties.occupancy_percentage + '%';
+                const odometer = properties.odometer == null
+                    ? 'Unavailable' : (properties.odometer).toFixed(1) + ' km';
+                const speed = properties.speed == null
+                    ? 'Unavailable' : (properties.speed).toFixed(1) + ' km/h';
                 const escapeHtml = (value) => value.replace(/[&<>'\"]/g, (char) => ({
                     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
                 }[char]));
@@ -188,13 +195,17 @@ def index():
                         </svg>
                     </div>`
                 });
-                const marker = L.marker(latlng, { icon: icon }).bindPopup(
-                    '<b>Bus ID:</b> ' + escapeHtml(busId) +
-                    '<br><b>Route:</b> ' + escapeHtml(routeId)
-                );
+                const marker = L.marker(latlng, { icon: icon });
                 marker.on('click', function () {
                     window.showBusRoute(this._map, tripId, routeId, directionId);
                 });
+                marker.bindPopup(
+                    '<b>Bus ID:</b> ' + escapeHtml(busId) +
+                    '<br><b>Route:</b> ' + escapeHtml(routeId) +
+                    '<br><b>Occupancy:</b> ' + occupancy +
+                    '<br><b>Odometer:</b> ' + odometer +
+                    '<br><b>Speed:</b> ' + speed
+                );
                 return marker;
             }"""
         ),
