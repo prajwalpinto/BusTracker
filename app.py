@@ -46,6 +46,16 @@ BUS_MARKER_CSS = """
     height: 48px;
     transform-origin: 20px 24px;
 }
+.bus-popup .leaflet-popup-content {
+    margin: 16px 18px;
+    font-size: 18px;
+    line-height: 1.6;
+}
+@media (max-width: 600px) {
+    .bus-popup .leaflet-popup-content {
+        font-size: 20px;
+    }
+}
 </style>
 """
 ROUTE_SCRIPT = """
@@ -92,10 +102,18 @@ def location_script(map_name):
 
         navigator.geolocation.getCurrentPosition(
             function (position) {{
-                map.setView([
+                const location = [
                     position.coords.latitude,
                     position.coords.longitude
-                ], map.getZoom());
+                ];
+                map.setView(location, map.getZoom());
+                L.circleMarker(location, {{
+                    radius: 8,
+                    color: '#0757c9',
+                    weight: 3,
+                    fillColor: '#1976d2',
+                    fillOpacity: 0.9
+                }}).addTo(map).bindPopup('Your current location');
             }},
             function () {{
                 // Permission denied or unavailable: keep the Halifax map center.
@@ -230,6 +248,7 @@ def index():
                     '<br><b>Occupancy:</b> ' + occupancy +
                     '<br><b>Odometer:</b> ' + odometer +
                     '<br><b>Speed:</b> ' + speed
+                    , { className: 'bus-popup' }
                 );
                 return marker;
             }"""

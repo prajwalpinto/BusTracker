@@ -25,10 +25,15 @@ def make_feed():
 class TransitTests(unittest.TestCase):
     def test_map_requests_location_with_center_fallback(self):
         page = app.app.test_client().get("/").get_data(as_text=True)
+        location_code = app.location_script("map_instance")
 
         self.assertIn("navigator.geolocation.getCurrentPosition", page)
         self.assertIn("enableHighAccuracy: false", page)
         self.assertIn("map.setView", page)
+        self.assertIn("fillColor: '#1976d2'", location_code)
+        self.assertIn("Your current location", location_code)
+        self.assertIn("className: 'bus-popup'", page)
+        self.assertIn("font-size: 20px", page)
 
     def test_route_ids_are_sorted_and_unique(self):
         feed = make_feed()
