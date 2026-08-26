@@ -293,7 +293,7 @@ def index():
                     iconSize: [100, 68],
                     iconAnchor: [50, 34],
                     html: `<div class="bus-marker">
-                        <span class="bus-label">${escapeHtml(busId)}</span>
+                        <span class="bus-label">${escapeHtml(routeId)}</span>
                         <svg class="bus-icon" viewBox="0 0 72 48" aria-hidden="true"
                              style="transform: rotate(${bearing - 90}deg)">
                             <path d="M7 14c0-4 3-7 7-7h43c4 0 7 3 8 7l3 19c.4 3-2 6-5 6H11c-2 0-4-2-4-4V14z" fill="#f6c945" stroke="#172b4d" stroke-width="2.5"/>
