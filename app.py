@@ -52,7 +52,23 @@ BUS_MARKER_CSS = """
     line-height: 1.6;
 }
 @media (max-width: 600px) {
+    .bus-marker {
+        transform: scale(1.35);
+        transform-origin: center center;
+    }
+    .bus-label {
+        max-width: 106px;
+        padding: 4px 8px;
+        border-width: 2px;
+        font-size: 16px;
+        line-height: 20px;
+    }
     .bus-popup .leaflet-popup-content {
+        font-size: 20px;
+    }
+    #route_selector {
+        min-height: 44px;
+        padding: 6px 10px;
         font-size: 20px;
     }
 }

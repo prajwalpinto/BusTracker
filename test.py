@@ -34,6 +34,8 @@ class TransitTests(unittest.TestCase):
         self.assertIn("Your current location", location_code)
         self.assertIn("className: 'bus-popup'", page)
         self.assertIn("font-size: 20px", page)
+        self.assertIn("transform: scale(1.35)", page)
+        self.assertIn("min-height: 44px", page)
 
     def test_route_ids_are_sorted_and_unique(self):
         feed = make_feed()
