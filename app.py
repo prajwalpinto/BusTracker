@@ -175,8 +175,35 @@ def location_script(map_name):
     <script>
     window.addEventListener('load', function () {{
         const map = {map_name};
+        const viewStorageKey = 'bus-tracker-map-view';
         let currentLocation = null;
         let currentLocationMarker = null;
+        let userMovedMap = false;
+        let updatingLocation = false;
+
+        try {{
+            const savedView = JSON.parse(localStorage.getItem(viewStorageKey));
+            if (savedView && Array.isArray(savedView.center)) {{
+                map.setView(savedView.center, savedView.zoom);
+            }}
+        }} catch (error) {{
+            localStorage.removeItem(viewStorageKey);
+        }}
+
+        map.on('movestart', function () {{
+            if (!updatingLocation) userMovedMap = true;
+        }});
+        map.on('moveend', function () {{
+            try {{
+                const center = map.getCenter();
+                localStorage.setItem(viewStorageKey, JSON.stringify({{
+                    center: [center.lat, center.lng],
+                    zoom: map.getZoom()
+                }}));
+            }} catch (error) {{
+                // Ignore browsers that block local storage.
+            }}
+        }});
 
         const locationControl = L.control({{ position: 'bottomright' }});
         locationControl.onAdd = function () {{
@@ -190,7 +217,9 @@ def location_script(map_name):
             L.DomEvent.disableClickPropagation(button);
             L.DomEvent.on(button, 'click', function () {{
                 if (currentLocation) {{
+                    updatingLocation = true;
                     map.setView(currentLocation, map.getZoom());
+                    updatingLocation = false;
                 }} else if (navigator.geolocation) {{
                     navigator.geolocation.getCurrentPosition(updateLocation);
                 }}
@@ -204,7 +233,11 @@ def location_script(map_name):
                 position.coords.latitude,
                 position.coords.longitude
             ];
-            map.setView(currentLocation, map.getZoom());
+            if (!userMovedMap && !localStorage.getItem(viewStorageKey)) {{
+                updatingLocation = true;
+                map.setView(currentLocation, map.getZoom());
+                updatingLocation = false;
+            }}
             if (currentLocationMarker) map.removeLayer(currentLocationMarker);
             currentLocationMarker = L.circleMarker(currentLocation, {{
                 radius: 12,
