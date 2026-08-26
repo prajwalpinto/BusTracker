@@ -22,7 +22,7 @@ BUS_MARKER_CSS = """
     font-size:25px;
 }
 .bus-marker {
-    width: 80px;
+    width: 100px;
     height: 68px;
     display: flex;
     flex-direction: column;
@@ -42,29 +42,53 @@ BUS_MARKER_CSS = """
     white-space: nowrap;
 }
 .bus-icon {
-    width: 40px;
+    width: 72px;
     height: 48px;
-    transform-origin: 20px 24px;
+    transform-origin: 36px 24px;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 .bus-popup .leaflet-popup-content {
     margin: 16px 18px;
     font-size: 18px;
     line-height: 1.6;
 }
+.current-location-control {
+    width: 48px;
+    height: 48px;
+    border: 2px solid #0757c9 !important;
+    border-radius: 8px !important;
+    background: #ffffff;
+    color: #0757c9;
+    cursor: pointer;
+    font-size: 30px;
+    line-height: 42px;
+    text-align: center;
+}
+.current-location-control:hover {
+    background: #e8f1ff;
+}
 @media (max-width: 600px) {
     .bus-marker {
-        transform: scale(1.35);
+        transform: scale(1.8);
         transform-origin: center center;
     }
     .bus-label {
         max-width: 106px;
         padding: 4px 8px;
         border-width: 2px;
-        font-size: 16px;
-        line-height: 20px;
+        font-size: 20px;
+        line-height: 24px;
     }
     .bus-popup .leaflet-popup-content {
-        font-size: 20px;
+        margin: 18px 20px;
+        font-size: 24px;
+        line-height: 1.55;
+    }
+    .current-location-control {
+        width: 58px;
+        height: 58px;
+        font-size: 36px;
+        line-height: 50px;
     }
     #route_selector {
         min-height: 44px;
@@ -114,23 +138,50 @@ def location_script(map_name):
     <script>
     window.addEventListener('load', function () {{
         const map = {map_name};
+        let currentLocation = null;
+        let currentLocationMarker = null;
+
+        const locationControl = L.control({{ position: 'bottomright' }});
+        locationControl.onAdd = function () {{
+            const button = L.DomUtil.create(
+                'button', 'current-location-control leaflet-bar'
+            );
+            button.type = 'button';
+            button.title = 'Center on my location';
+            button.setAttribute('aria-label', 'Center on my location');
+            button.innerHTML = '&#8853;';
+            L.DomEvent.disableClickPropagation(button);
+            L.DomEvent.on(button, 'click', function () {{
+                if (currentLocation) {{
+                    map.setView(currentLocation, map.getZoom());
+                }} else if (navigator.geolocation) {{
+                    navigator.geolocation.getCurrentPosition(updateLocation);
+                }}
+            }});
+            return button;
+        }};
+        locationControl.addTo(map);
+
+        function updateLocation(position) {{
+            currentLocation = [
+                position.coords.latitude,
+                position.coords.longitude
+            ];
+            map.setView(currentLocation, map.getZoom());
+            if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+            currentLocationMarker = L.circleMarker(currentLocation, {{
+                radius: 12,
+                color: '#ffffff',
+                weight: 4,
+                fillColor: '#1976d2',
+                fillOpacity: 1
+            }}).addTo(map).bindPopup('Your current location');
+        }}
+
         if (!navigator.geolocation) return;
 
         navigator.geolocation.getCurrentPosition(
-            function (position) {{
-                const location = [
-                    position.coords.latitude,
-                    position.coords.longitude
-                ];
-                map.setView(location, map.getZoom());
-                L.circleMarker(location, {{
-                    radius: 8,
-                    color: '#0757c9',
-                    weight: 3,
-                    fillColor: '#1976d2',
-                    fillOpacity: 0.9
-                }}).addTo(map).bindPopup('Your current location');
-            }},
+            updateLocation,
             function () {{
                 // Permission denied or unavailable: keep the Halifax map center.
             }},
@@ -239,18 +290,22 @@ def index():
                 }[char]));
                 const icon = L.divIcon({
                     className: 'bus-marker-wrapper',
-                    iconSize: [80, 68],
-                    iconAnchor: [40, 34],
+                    iconSize: [100, 68],
+                    iconAnchor: [50, 34],
                     html: `<div class="bus-marker">
-                        <span class="bus-label">${escapeHtml(routeId)}</span>
-                        <svg class="bus-icon" viewBox="0 0 40 48" aria-hidden="true"
-                             style="transform: rotate(${bearing}deg)">
-                            <rect x="8" y="3" width="24" height="40" rx="7" fill="#f4c542" stroke="#1d2939" stroke-width="2"/>
-                            <path d="M11 12h18v10H11z" fill="#b9e6f2" stroke="#1d2939" stroke-width="1.5"/>
-                            <path d="M12 27h16" stroke="#1d2939" stroke-width="2"/>
-                            <circle cx="12" cy="43" r="3" fill="#1d2939"/>
-                            <circle cx="28" cy="43" r="3" fill="#1d2939"/>
-                            <path d="M20 4v5" stroke="#1d2939" stroke-width="2"/>
+                        <span class="bus-label">${escapeHtml(busId)}</span>
+                        <svg class="bus-icon" viewBox="0 0 72 48" aria-hidden="true"
+                             style="transform: rotate(${bearing - 90}deg)">
+                            <path d="M7 14c0-4 3-7 7-7h43c4 0 7 3 8 7l3 19c.4 3-2 6-5 6H11c-2 0-4-2-4-4V14z" fill="#f6c945" stroke="#172b4d" stroke-width="2.5"/>
+                            <path d="M13 11h41c2.5 0 4.5 1.8 5 4.2L60 24H13V11z" fill="#9ed9e8" stroke="#172b4d" stroke-width="2"/>
+                            <path d="M22 11v13M32 11v13M42 11v13M52 11v13" stroke="#172b4d" stroke-width="1.5"/>
+                            <path d="M60 12c2.5 1 4 3 4.5 5.5L66 24H60V12z" fill="#d8f2f6" stroke="#172b4d" stroke-width="2"/>
+                            <rect x="25" y="28" width="22" height="6" rx="1.5" fill="#fff3a6" stroke="#172b4d" stroke-width="1.5"/>
+                            <path d="M9 28h8M52 28h12" stroke="#172b4d" stroke-width="2"/>
+                            <circle cx="19" cy="39" r="7" fill="#172b4d"/>
+                            <circle cx="19" cy="39" r="3.5" fill="#6aa0bf"/>
+                            <circle cx="55" cy="39" r="7" fill="#172b4d"/>
+                            <circle cx="55" cy="39" r="3.5" fill="#6aa0bf"/>
                         </svg>
                     </div>`
                 });
