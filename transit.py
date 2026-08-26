@@ -86,6 +86,11 @@ def vehicles_to_geojson(feed, target=None):
                         if vehicle.HasField("occupancy_percentage")
                         else None
                     ),
+                    "occupancy_status": (
+                        _enum_name(vehicle, "occupancy_status")
+                        if vehicle.HasField("occupancy_status")
+                        else None
+                    ),
                     "odometer": (
                         position.odometer
                         if position.HasField("odometer")
@@ -205,3 +210,10 @@ def _fallback_trip(trips, route_id, direction_id):
 def _vehicles(feed) -> Iterable:
     """Yield entities that contain vehicle data."""
     return (entity for entity in feed.entity if entity.HasField("vehicle"))
+
+
+def _enum_name(message, field_name):
+    """Return a protobuf enum's readable name."""
+    field = message.DESCRIPTOR.fields_by_name[field_name]
+    value = getattr(message, field_name)
+    return field.enum_type.values_by_number[value].name

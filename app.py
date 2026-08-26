@@ -21,6 +21,30 @@ BUS_MARKER_CSS = """
     border: 0 !important;
     font-size:25px;
 }
+.route-filter {
+    position: fixed;
+    top: 14px;
+    left: 70px;
+    z-index: 1000;
+    padding: 12px 14px;
+    border: 1px solid rgba(23, 43, 77, 0.28);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 3px 12px rgba(23, 43, 77, 0.2);
+    color: #172b4d;
+    font: 700 16px/1.3 sans-serif;
+}
+.route-filter select {
+    display: block;
+    min-width: 150px;
+    margin-top: 6px;
+    padding: 5px 8px;
+    border: 1px solid #9aa9bf;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172b4d;
+    font: inherit;
+}
 .bus-marker {
     width: 100px;
     height: 68px;
@@ -94,6 +118,19 @@ BUS_MARKER_CSS = """
         min-height: 44px;
         padding: 6px 10px;
         font-size: 20px;
+    }
+    .route-filter {
+        top: 10px;
+        left: 52px;
+        padding: 10px 12px;
+        font-size: 20px;
+    }
+    .route-filter select {
+        min-width: 190px;
+        min-height: 48px;
+        margin-top: 8px;
+        padding: 6px 10px;
+        font-size: 22px;
     }
 }
 </style>
@@ -242,9 +279,7 @@ def route_selector_html(active_routes, target):
         )
 
     return (
-        '<div style="position:fixed;top:10px;left:70px;z-index:1000;'
-        'background:#fff;padding:10px;border:2px solid grey;border-radius:5px;'
-        'font-family:sans-serif;font-size:30px">'
+        '<div class="route-filter">'
         '<b>Filter by Route:</b><br>'
         '<select id="route_selector" onchange="window.location.href=this.value">'
         + "".join(options)
@@ -267,7 +302,7 @@ def index():
         app.logger.error("Error fetching route list: %s", error)
         active_routes = []
 
-    bus_map = folium.Map(location=MAP_CENTER, zoom_start=14)
+    bus_map = folium.Map(location=MAP_CENTER, zoom_start=14, zoom_control=False)
     Realtime(
         data_url,
         interval=10000,
@@ -281,6 +316,9 @@ def index():
                 const bearing = Number(properties.bearing) || 0;
                 const occupancy = properties.occupancy_percentage == null
                     ? 'Unavailable' : properties.occupancy_percentage + '%';
+                const occupancyStatus = properties.occupancy_status
+                    ? String(properties.occupancy_status).replaceAll('_', ' ')
+                    : 'Unavailable';
                 const odometer = properties.odometer == null
                     ? 'Unavailable' : (properties.odometer).toFixed(1) + ' km';
                 const speed = properties.speed == null
@@ -317,6 +355,7 @@ def index():
                     '<b>Bus ID:</b> ' + escapeHtml(busId) +
                     '<br><b>Route:</b> ' + escapeHtml(routeId) +
                     '<br><b>Occupancy:</b> ' + occupancy +
+                    '<br><b>Occupancy status:</b> ' + escapeHtml(occupancyStatus) +
                     '<br><b>Odometer:</b> ' + odometer +
                     '<br><b>Speed:</b> ' + speed
                     , { className: 'bus-popup' }

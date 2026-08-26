@@ -19,6 +19,7 @@ def make_feed():
     entity.vehicle.position.odometer = 3315.24864
     entity.vehicle.position.speed = 13.4112
     entity.vehicle.occupancy_percentage = 20
+    entity.vehicle.occupancy_status = "MANY_SEATS_AVAILABLE"
     return feed
 
 
@@ -61,6 +62,7 @@ class TransitTests(unittest.TestCase):
         self.assertEqual(by_bus, by_route)
         properties = by_bus["features"][0]["properties"]
         self.assertEqual(properties["occupancy_percentage"], 20)
+        self.assertEqual(properties["occupancy_status"], "MANY_SEATS_AVAILABLE")
         self.assertAlmostEqual(properties["odometer"], 3315.24864, places=3)
         self.assertAlmostEqual(properties["speed"], 13.4112, places=3)
         coordinates = by_bus["features"][0]["geometry"]["coordinates"]
